@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Election Quest – Stage Select</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script id="tailwind-config">
+tailwind.config={darkMode:"class",theme:{extend:{colors:{
+  "outline":"#807660","primary-fixed":"#ffe08b","outline-variant":"#d1c5ac","secondary":"#535f74",
+  "primary-fixed-dim":"#f0c110","on-surface-variant":"#4e4633","surface-container-highest":"#ebe1d1",
+  "surface-container-high":"#f1e7d6","background":"#fff8f1","surface-variant":"#ebe1d1",
+  "tertiary":"#00687c","primary":"#745b00","on-primary":"#ffffff","on-background":"#1f1b11",
+  "surface-container":"#f6eddc","on-surface":"#1f1b11","secondary-container":"#d4e0f9",
+  "surface-container-lowest":"#ffffff","on-primary-container":"#695200",
+  "primary-container":"#f5c518","surface-tint":"#745b00","tertiary-container":"#49dbff",
+  "on-tertiary":"#ffffff","on-tertiary-container":"#005e70","tertiary-fixed":"#b0ecff",
+}}}}
+</script>
+<style>
+  body{font-family:'Public Sans',sans-serif;background:#fff8f1;}
+  #map{height:100%;width:100%;}
+  .leaflet-popup-content-wrapper{border-radius:12px;border:1px solid #d1c5ac;font-family:'Public Sans',sans-serif;}
+  .stage-popup h3{font-weight:700;font-size:16px;margin-bottom:4px;color:#1f1b11;}
+  .stage-popup p{font-size:13px;color:#4e4633;margin-bottom:8px;}
+  .stage-popup .btn{display:inline-block;background:#f5c518;color:#695200;font-weight:700;font-size:12px;
+    padding:8px 16px;border-radius:8px;cursor:pointer;border:none;text-transform:uppercase;letter-spacing:.05em;}
+  .stage-popup .btn:disabled{background:#ebe1d1;color:#807660;cursor:not-allowed;}
+  .stage-popup .locked{color:#ba1a1a;font-size:12px;}
+  .hud-stat{display:flex;align-items:center;gap:6px;font-size:13px;}
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+
+<!-- Header -->
+<header class="bg-surface-container-lowest border-b border-surface-variant z-50 sticky top-0 w-full">
+  <div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
+    <a href="index.html" class="text-2xl font-black tracking-tighter text-on-surface">ELECTION QUEST</a>
+    <nav class="hidden md:flex space-x-8">
+      <a href="map.html"         class="text-primary border-b-2 border-primary pb-1 font-bold">Classroom</a>
+      <a href="leaderboard.html" class="text-on-surface-variant font-medium hover:text-primary transition-colors">Leaderboard</a>
+      <a href="trophies.html"    class="text-on-surface-variant font-medium hover:text-primary transition-colors">Trophies</a>
+    </nav>
+    <div class="flex items-center gap-4">
+      <!-- HUD pills -->
+      <div id="hudXP"    class="hidden lg:flex hud-stat bg-surface-container border border-outline-variant px-3 py-1 rounded-full"></div>
+      <div id="hudLevel" class="hidden lg:flex hud-stat bg-primary-container border border-yellow-400 px-3 py-1 rounded-full"></div>
+      <div id="hudStreak" class="hidden lg:flex hud-stat bg-surface-container border border-outline-variant px-3 py-1 rounded-full"></div>
+      <a href="trophies.html" class="text-primary hover:text-primary-fixed-dim transition-colors">
+        <span class="material-symbols-outlined text-2xl">military_tech</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="flex flex-1 overflow-hidden" style="height:calc(100vh - 65px)">
+  <!-- Sidebar -->
+  <aside class="hidden xl:flex flex-col w-64 border-r border-surface-variant bg-surface-container-lowest z-40 p-4 overflow-y-auto">
+    <div class="mb-6 p-4 bg-surface rounded-xl border border-outline-variant">
+      <div class="flex items-center gap-3 mb-2">
+        <div id="sideLevel" class="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xl">1</div>
+        <div>
+          <div id="sideName" class="font-bold text-on-surface text-sm">Civic Leader</div>
+          <div id="sideRank" class="text-xs text-on-surface-variant">Junior Fellow</div>
+        </div>
+      </div>
+      <div class="w-full bg-surface-variant rounded-full h-2 mb-1 mt-4">
+        <div id="xpBar" class="bg-primary h-2 rounded-full transition-all" style="width:0%"></div>
+      </div>
+      <div class="flex justify-between text-xs text-on-surface-variant mt-1">
+        <span id="xpCurrent">0 XP</span><span id="xpNext">300 XP</span>
+      </div>
+    </div>
+    <div class="font-bold text-xs text-on-surface-variant uppercase tracking-widest mb-4 mt-2">Choose Your Stage</div>
+    <div id="stageList" class="flex flex-col gap-2"></div>
+    <a href="leaderboard.html" class="mt-6 w-full py-3 bg-primary text-on-primary text-xs font-bold uppercase tracking-widest rounded-full text-center hover:opacity-90 transition-opacity">
+      View Leaderboard
+    </a>
+  </aside>
+
+  <!-- Map -->
+  <main class="flex-1 relative">
+    <div id="map" class="absolute inset-0"></div>
+    <!-- Mobile stage buttons -->
+    <div id="mobileStages" class="xl:hidden absolute bottom-4 left-0 right-0 flex gap-2 overflow-x-auto px-4 pb-2 z-10"></div>
+  </main>
+</div>
+
+<script type="module">
+import { getState, setState, markStageDone } from './src/state.js';
+
+const STAGES = [
+  { name:'Capitol Hill',     sub:'Candidacy',     lat:28.614,   lng:77.209,  icon:'account_balance', color:'#22c55e', xp:100 },
+  { name:'Town Hall',        sub:'Registration',  lat:19.076,   lng:72.877,  icon:'how_to_reg',      color:'#22c55e', xp:120 },
+  { name:'Party HQ',         sub:'Primaries',     lat:12.972,   lng:77.594,  icon:'groups',          color:'#745b00', xp:150 },
+  { name:'Campaign Trail',   sub:'Campaigning',   lat:22.572,   lng:88.363,  icon:'campaign',        color:'#807660', xp:180 },
+  { name:'Voting Booth',     sub:'Election Day',  lat:13.082,   lng:80.270,  icon:'how_to_vote',     color:'#807660', xp:200 },
+  { name:'Count Room',       sub:'Vote Counting', lat:23.022,   lng:72.571,  icon:'calculate',       color:'#807660', xp:220 },
+  { name:'Certification Hall',sub:'Results',      lat:26.916,   lng:80.995,  icon:'emoji_events',    color:'#807660', xp:250 },
+];
+
+const ROUTES = ['briefing.html','briefing.html','briefing.html','briefing.html','briefing.html','briefing.html','graduate.html'];
+
+function init() {
+  const s = getState();
+
+  // HUD
+  document.getElementById('hudXP').innerHTML    = `<span class="material-symbols-outlined text-sm">stars</span>XP: ${s.xp}`;
+  document.getElementById('hudLevel').innerHTML = `<span class="material-symbols-outlined text-sm">workspace_premium</span>Lv ${s.level}`;
+  document.getElementById('hudStreak').innerHTML= `<span class="material-symbols-outlined text-sm text-orange-500">local_fire_department</span>${s.streakDays}d`;
+  document.getElementById('sideLevel').textContent = s.level;
+  document.getElementById('sideName').textContent  = s.playerName;
+  const xpInLevel = s.xp % 300, pct = Math.round(xpInLevel / 300 * 100);
+  document.getElementById('xpBar').style.width = pct + '%';
+  document.getElementById('xpCurrent').textContent = s.xp + ' XP';
+  document.getElementById('xpNext').textContent    = (Math.ceil(s.xp / 300) * 300) + ' XP';
+
+  // Map
+  const map = L.map('map', { zoomControl:true }).setView([20.5937, 78.9629], 5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenStreetMap',
+    maxZoom:18,
+  }).addTo(map);
+
+  const unlocked = new Set(s.stagesUnlocked);
+  const done     = new Set(s.stagesDone);
+
+  // Draw path
+  const pathCoords = STAGES.map(st => [st.lat, st.lng]);
+  L.polyline(pathCoords, { color:'#d1c5ac', weight:3, dashArray:'8,8' }).addTo(map);
+
+  // Sidebar list
+  const listEl = document.getElementById('stageList');
+  const mobileEl = document.getElementById('mobileStages');
+
+  STAGES.forEach((st, i) => {
+    const isUnlocked = unlocked.has(i);
+    const isDone     = done.has(i);
+    const isActive   = isUnlocked && !isDone && [...done].length === i || (i===0 && done.size===0 && isUnlocked);
+
+    // Leaflet icon
+    const bgColor = isDone ? '#22c55e' : isUnlocked ? '#745b00' : '#ebe1d1';
+    const textColor = isDone || isUnlocked ? '#ffffff' : '#807660';
+    const divIcon = L.divIcon({
+      className:'',
+      html:`<div style="width:44px;height:44px;border-radius:50%;background:${bgColor};border:3px solid #fff;
+             box-shadow:0 4px 12px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;
+             font-size:20px;color:${textColor};cursor:${isUnlocked?'pointer':'not-allowed'}"
+             class="material-symbols-outlined">
+             ${isDone?'check_circle':st.icon}
+           </div>`,
+      iconAnchor:[22,22],
+    });
+
+    const marker = L.marker([st.lat, st.lng], { icon: divIcon }).addTo(map);
+
+    const popupHtml = `
+      <div class="stage-popup" style="min-width:200px">
+        <div style="font-size:11px;color:#535f74;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${isDone?'✓ Completed':isUnlocked?'Active':'Locked'}</div>
+        <h3>${st.name}</h3>
+        <p>${st.sub} · ${st.xp} XP reward</p>
+        ${isUnlocked
+          ? `<button class="btn" onclick="window.location.href='briefing.html?stage=${i}'">
+               ${isDone ? 'Review Stage' : 'Enter Stage →'}
+             </button>`
+          : `<span class="locked">🔒 Complete previous stages to unlock</span>`
+        }
+      </div>`;
+    marker.bindPopup(popupHtml, { maxWidth:250 });
+
+    // Sidebar item
+    const li = document.createElement('a');
+    li.href = isUnlocked ? `briefing.html?stage=${i}` : '#';
+    li.className = `flex items-center gap-3 p-3 rounded-lg transition-all ${
+      isDone ? 'text-green-700 bg-green-50 border border-green-200' :
+      isUnlocked ? 'text-primary bg-primary-container/20 font-bold border-l-4 border-primary' :
+      'text-on-surface-variant opacity-50 cursor-not-allowed'
+    }`;
+    li.innerHTML = `
+      <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1">${isDone?'check_circle':isUnlocked?st.icon:'lock'}</span>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-medium truncate">${st.name}</div>
+        <div class="text-xs opacity-70">${st.sub}</div>
+      </div>
+      <span class="text-xs opacity-60">${st.xp}XP</span>`;
+    if (!isUnlocked) li.addEventListener('click', e => e.preventDefault());
+    listEl.appendChild(li);
+
+    // Mobile button
+    const mb = document.createElement('button');
+    mb.className = `flex-shrink-0 px-3 py-2 rounded-full text-xs font-bold border ${
+      isDone ? 'bg-green-100 border-green-400 text-green-700' :
+      isUnlocked ? 'bg-primary-container border-yellow-400 text-on-primary-container' :
+      'bg-surface-variant border-outline-variant text-on-surface-variant opacity-50'
+    }`;
+    mb.textContent = st.name;
+    mb.disabled = !isUnlocked;
+    mb.onclick = () => { if(isUnlocked) window.location.href = `briefing.html?stage=${i}`; };
+    mobileEl.appendChild(mb);
+  });
+}
+
+init();
+</script>
+</body>
+</html>

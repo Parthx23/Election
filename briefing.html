@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stage Briefing – Election Quest</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+tailwind.config={darkMode:"class",theme:{extend:{colors:{
+  "outline":"#807660","primary-fixed":"#ffe08b","outline-variant":"#d1c5ac","secondary":"#535f74",
+  "primary-fixed-dim":"#f0c110","on-surface-variant":"#4e4633","surface-container-highest":"#ebe1d1",
+  "surface-container-high":"#f1e7d6","background":"#fff8f1","surface-variant":"#ebe1d1",
+  "tertiary":"#00687c","primary":"#745b00","on-primary":"#ffffff","on-background":"#1f1b11",
+  "surface-container":"#f6eddc","on-surface":"#1f1b11","secondary-container":"#d4e0f9",
+  "surface-container-lowest":"#ffffff","on-primary-container":"#695200",
+  "primary-container":"#f5c518","surface-tint":"#745b00","tertiary-container":"#49dbff",
+  "on-tertiary":"#ffffff","on-tertiary-container":"#005e70","tertiary-fixed":"#b0ecff",
+  "error":"#ba1a1a","error-container":"#ffdad6","on-error-container":"#93000a",
+},fontSize:{
+  "display-lg":["48px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"700"}],
+  "headline-xl":["32px",{"lineHeight":"1.2","letterSpacing":"-0.01em","fontWeight":"700"}],
+  "headline-md":["24px",{"lineHeight":"1.3","fontWeight":"600"}],
+  "body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],
+  "body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],
+  "label-sm":["12px",{"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"600"}]
+}}}}
+</script>
+<style>body{font-family:'Public Sans',sans-serif;}</style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+
+<!-- Header -->
+<header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+  <div class="flex justify-between items-center px-8 py-4 max-w-screen-2xl mx-auto">
+    <div class="flex items-center gap-8">
+      <a href="index.html" class="text-2xl font-black tracking-tighter text-slate-900">ELECTION QUEST</a>
+      <nav class="hidden md:flex gap-6">
+        <a href="map.html"         class="text-yellow-600 border-b-2 border-yellow-500 pb-1 font-bold">Classroom</a>
+        <a href="leaderboard.html" class="text-slate-600 font-medium hover:text-yellow-600">Leaderboard</a>
+        <a href="trophies.html"    class="text-slate-600 font-medium hover:text-yellow-600">Trophies</a>
+      </nav>
+    </div>
+    <div class="flex items-center gap-4 text-yellow-600">
+      <a href="trophies.html"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">military_tech</span></a>
+    </div>
+  </div>
+</header>
+
+<!-- Main -->
+<main class="flex-grow flex justify-center py-16 px-6">
+  <article class="w-full max-w-3xl flex flex-col gap-10">
+
+    <!-- Breadcrumb -->
+    <nav><a href="map.html" class="inline-flex items-center gap-2 text-secondary hover:text-primary transition-colors text-label-sm uppercase tracking-widest">
+      <span class="material-symbols-outlined text-[16px]">arrow_back</span>Back to Map
+    </a></nav>
+
+    <!-- Hero image -->
+    <figure class="w-full aspect-[21/9] rounded-xl overflow-hidden bg-surface-container border border-outline-variant shadow-sm">
+      <img id="stageImg" class="w-full h-full object-cover" alt="Stage Illustration"
+           src="https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1200&q=80"/>
+    </figure>
+
+    <!-- Stage header -->
+    <header class="flex flex-col gap-4">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-surface-variant pb-6">
+        <span id="stageBadge" class="text-label-sm text-tertiary uppercase tracking-widest bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full">Stage 1 Briefing</span>
+        <div class="flex items-center gap-1.5 bg-primary-container text-on-primary-container px-4 py-1.5 rounded-full text-label-sm shadow-sm border border-primary-fixed-dim">
+          <span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1">stars</span>
+          <span id="xpReward">Reward: 100 XP</span>
+        </div>
+      </div>
+      <h1 id="stageTitle" class="text-display-lg text-on-background mt-2">Voter Registration</h1>
+    </header>
+
+    <!-- Content -->
+    <section class="flex flex-col gap-8">
+      <p id="stageBody" class="text-body-lg text-on-surface-variant leading-relaxed"></p>
+      <aside class="border-l-4 border-primary bg-surface-container-lowest shadow-sm rounded-r-lg p-6 flex flex-col gap-3 relative overflow-hidden">
+        <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-[120px] text-surface-container-highest opacity-50 pointer-events-none">how_to_reg</span>
+        <div class="flex items-center gap-2 text-primary">
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">lightbulb</span>
+          <span class="text-label-sm uppercase tracking-widest">Key Fact</span>
+        </div>
+        <p id="stageFact" class="text-body-md text-on-surface relative z-10 leading-relaxed"></p>
+      </aside>
+    </section>
+
+    <!-- AI Ask box -->
+    <section class="mt-4 flex flex-col gap-3">
+      <label class="text-label-sm text-on-surface-variant uppercase tracking-widest" for="askBox">Need clarification before the quiz?</label>
+      <div class="relative flex items-center bg-surface-container-lowest border border-outline-variant rounded-xl p-2 shadow-sm focus-within:border-primary transition-all">
+        <span class="material-symbols-outlined text-primary ml-3" style="font-variation-settings:'FILL' 1">auto_awesome</span>
+        <input id="askBox" class="w-full bg-transparent border-none focus:ring-0 text-body-md px-4 text-on-surface placeholder:text-outline-variant outline-none" placeholder="Ask anything about this stage…" type="text"/>
+        <button id="askBtn" class="p-2.5 rounded-lg bg-surface-container hover:bg-surface-container-highest text-on-surface-variant hover:text-primary transition-colors">
+          <span class="material-symbols-outlined text-[20px]">send</span>
+        </button>
+      </div>
+      <div id="aiResponse" class="hidden bg-tertiary-fixed/20 border border-tertiary-fixed rounded-xl p-4 text-body-md text-on-surface leading-relaxed"></div>
+    </section>
+
+    <!-- CTA -->
+    <section class="mt-4 pt-8 border-t border-surface-variant flex flex-col gap-4">
+      <div class="flex flex-col sm:flex-row gap-4 justify-end">
+        <button id="playGameBtn" class="hidden bg-surface-container text-on-surface border border-outline-variant px-8 py-4 rounded-full text-label-sm uppercase tracking-widest flex items-center gap-2 hover:bg-surface-variant transition-colors">
+          <span class="material-symbols-outlined">sports_esports</span>Mini-Game First
+        </button>
+        <button id="startQuizBtn" class="bg-primary text-on-primary px-10 py-5 rounded-full text-label-sm uppercase tracking-widest flex items-center gap-3 shadow-md hover:shadow-lg hover:opacity-90 transition-all">
+          I'm ready — take the quiz
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
+      </div>
+    </section>
+
+  </article>
+</main>
+
+<script type="module">
+import { getState, setState, unlockNextStage } from './src/state.js';
+
+const STAGES = [
+  {
+    title:'Voter Registration', xp:100, img:'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1200&q=80',
+    body:`Voter registration is the foundational step in democratic participation. In India, the Election Commission ensures that every eligible citizen over 18 is enrolled in the electoral roll. This rigorous process verifies identity, assigns a polling station, and issues the Electoral Photo Identity Card (EPIC). Your place on the voter list is the essential key to casting a ballot.`,
+    fact:`The Indian electoral roll is a living document, updated continuously. You can apply via the Voter Portal using Form 6 at any time.`
+  },
+  {
+    title:'Candidacy & Nomination', xp:120, img:'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=1200&q=80',
+    body:`To become a candidate for the Lok Sabha, a person must be an Indian citizen, at least 25 years old, and their name must appear on an electoral roll. Candidates file nomination papers with a returning officer, pay a security deposit, and must obtain signatures from a requisite number of electors in their constituency.`,
+    fact:`The security deposit for a Lok Sabha candidate is ₹25,000 (₹12,500 for SC/ST candidates). It is forfeited if the candidate gets less than 1/6th of total valid votes.`
+  },
+  {
+    title:'Primary Elections & Party Primaries', xp:150, img:'https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&w=1200&q=80',
+    body:`Indian political parties use internal party elections or central nomination committees to select their candidates. Unlike the US system, India does not have formal primary elections, but parties hold internal democratic processes. The model code of conduct comes into force once elections are announced.`,
+    fact:`The Model Code of Conduct (MCC) applies from the date the election schedule is announced by the ECI and remains in force until the election process is complete.`
+  },
+  {
+    title:'Election Campaigning', xp:180, img:'https://images.unsplash.com/photo-1523995462485-3d171b5c8fa9?auto=format&fit=crop&w=1200&q=80',
+    body:`Election campaigning in India is a colourful, boisterous exercise of democracy. Candidates use rallies, door-to-door visits, social media, and advertisements. The ECI enforces strict spending limits and prohibits hate speech. Campaigning must stop 48 hours before polling day—the silence period.`,
+    fact:`Lok Sabha candidates have a campaign expenditure limit of ₹95 lakh per constituency (in larger states). Violations can lead to disqualification.`
+  },
+  {
+    title:'Election Day & Voting', xp:200, img:'https://images.unsplash.com/photo-1564521596467-6d10c9a3f9e3?auto=format&fit=crop&w=1200&q=80',
+    body:`On Election Day, registered voters go to their assigned polling booths. India uses Electronic Voting Machines (EVMs) and Voter Verifiable Paper Audit Trails (VVPATs). Each voter authenticates with their EPIC and biometric data. The entire process is monitored by polling officers and independent observers.`,
+    fact:`India introduced EVMs in 1982. By 2004, they were used nationwide. The VVPAT was added to provide a paper trail for verification, first used in 2013 by-elections.`
+  },
+  {
+    title:'Vote Counting & Results', xp:220, img:'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80',
+    body:`After polls close, EVMs are sealed and transported under heavy security to counting centres. On counting day, candidates and their agents observe as votes are tallied round by round. The returning officer declares the winner once a clear majority is established. Results are submitted to the ECI.`,
+    fact:`Counting of votes typically begins at 8 AM on the day fixed by the ECI. The entire Lok Sabha result is usually known within a single day due to simultaneous counting across all constituencies.`
+  },
+  {
+    title:'Government Formation', xp:250, img:'https://images.unsplash.com/photo-1580835239846-5bb9ce03a83c?auto=format&fit=crop&w=1200&q=80',
+    body:`After results, the party or coalition with majority support in the Lok Sabha invites the President to form a government. The President invites the leader of the majority to become Prime Minister. The PM then selects the Council of Ministers. If no clear majority exists, a coalition government is formed.`,
+    fact:`A party needs a minimum of 272 seats (simple majority) in the 543-seat Lok Sabha to form a government on its own. Coalitions often involve complex negotiations between multiple parties.`
+  },
+];
+
+const params = new URLSearchParams(window.location.search);
+const stageIdx = parseInt(params.get('stage') || '0', 10);
+const stage = STAGES[Math.min(stageIdx, STAGES.length-1)];
+const s = getState();
+
+// Render
+document.getElementById('stageTitle').textContent = stage.title;
+document.getElementById('stageBody').textContent  = stage.body;
+document.getElementById('stageFact').textContent  = stage.fact;
+document.getElementById('xpReward').textContent   = `Reward: ${stage.xp} XP`;
+document.getElementById('stageBadge').textContent = `Stage ${stageIdx+1} Briefing`;
+document.getElementById('stageImg').src           = stage.img;
+
+// Show mini-game button only for stage 3+ (ballot game is stage 2 → game.html)
+if (stageIdx >= 2) {
+  document.getElementById('playGameBtn').classList.remove('hidden');
+  document.getElementById('playGameBtn').onclick = () => {
+    setState({ pendingStage: stageIdx });
+    window.location.href = 'game.html?stage=' + stageIdx;
+  };
+}
+
+document.getElementById('startQuizBtn').onclick = () => {
+  setState({ pendingStage: stageIdx });
+  window.location.href = 'quiz.html?stage=' + stageIdx;
+};
+
+// Simple AI hints (static lookup)
+const HINTS = {
+  'registration': 'Voter registration in India uses Form 6 on the Voter Portal (voters.eci.gov.in).',
+  'epic': 'EPIC stands for Electoral Photo Identity Card — issued by the ECI to registered voters.',
+  'age': 'The minimum voting age in India is 18 years, lowered from 21 by the 61st Amendment in 1988.',
+  'evm': 'EVMs (Electronic Voting Machines) have been used in Indian elections since 1982, fully nationwide since 2004.',
+  'nota': 'NOTA (None of the Above) allows voters to reject all candidates, introduced in 2013.',
+  'model code': 'The Model Code of Conduct begins when the election schedule is announced and ends after results.',
+};
+
+document.getElementById('askBtn').addEventListener('click', () => {
+  const q = document.getElementById('askBox').value.toLowerCase().trim();
+  if (!q) return;
+  const respEl = document.getElementById('aiResponse');
+  respEl.classList.remove('hidden');
+  let answer = 'Great question! This topic relates to ' + stage.title + '. Review the stage content and key fact above for detailed information.';
+  for (const [keyword, hint] of Object.entries(HINTS)) {
+    if (q.includes(keyword)) { answer = hint; break; }
+  }
+  respEl.textContent = '💡 ' + answer;
+  document.getElementById('askBox').value = '';
+});
+document.getElementById('askBox').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('askBtn').click(); });
+</script>
+</body>
+</html>

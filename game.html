@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ballot Sorting – Election Quest</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+tailwind.config={darkMode:"class",theme:{extend:{colors:{
+  "outline":"#807660","primary-fixed":"#ffe08b","outline-variant":"#d1c5ac","secondary":"#535f74",
+  "primary-fixed-dim":"#f0c110","on-surface-variant":"#4e4633","surface-container-highest":"#ebe1d1",
+  "surface-container-high":"#f1e7d6","background":"#fff8f1","surface-variant":"#ebe1d1",
+  "tertiary":"#00687c","primary":"#745b00","on-primary":"#ffffff","on-background":"#1f1b11",
+  "surface-container":"#f6eddc","on-surface":"#1f1b11","secondary-container":"#d4e0f9",
+  "surface-container-lowest":"#ffffff","on-primary-container":"#695200",
+  "primary-container":"#f5c518","surface-tint":"#745b00","tertiary-container":"#49dbff",
+  "on-tertiary":"#ffffff","on-tertiary-container":"#005e70","tertiary-fixed":"#b0ecff",
+  "error":"#ba1a1a","error-container":"#ffdad6","on-error-container":"#93000a",
+},fontSize:{
+  "display-lg":["48px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"700"}],
+  "headline-xl":["32px",{"lineHeight":"1.2","letterSpacing":"-0.01em","fontWeight":"700"}],
+  "headline-md":["24px",{"lineHeight":"1.3","fontWeight":"600"}],
+  "body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],
+  "body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],
+  "label-sm":["12px",{"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"600"}]
+}}}}
+</script>
+<style>
+body{font-family:'Public Sans',sans-serif;}
+.grid-bg{background-image:linear-gradient(to right,#ebe1d1 1px,transparent 1px),linear-gradient(to bottom,#ebe1d1 1px,transparent 1px);background-size:40px 40px;}
+.ballot-card{transition:transform .15s, box-shadow .15s; cursor:grab; user-select:none;}
+.ballot-card:active{cursor:grabbing;}
+.drop-zone{transition:background .2s, border-color .2s;}
+.drop-zone.drag-over{transform:scale(1.02);}
+.drop-zone.invalid-zone.drag-over{background:rgba(186,26,26,.15);}
+.drop-zone.valid-zone.drag-over{background:rgba(0,104,124,.15);}
+#timerCircle{transition:stroke-dashoffset 1s linear;}
+.toast{position:fixed;top:80px;right:24px;z-index:9999;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;transform:translateY(-10px);transition:all .3s;}
+.toast.show{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body class="bg-background min-h-screen flex flex-col grid-bg">
+
+<!-- Header -->
+<header class="w-full bg-surface-container-lowest border-b border-surface-variant py-4 px-6 md:px-10 flex justify-between items-center sticky top-0 z-50">
+  <div class="flex items-center gap-4">
+    <button onclick="history.back()" class="flex items-center justify-center w-10 h-10 rounded-full bg-surface-container hover:bg-surface-variant transition-colors border border-outline-variant text-on-surface">
+      <span class="material-symbols-outlined">arrow_back</span>
+    </button>
+    <div>
+      <span class="text-label-sm text-secondary uppercase tracking-widest">Mini‑Game</span>
+      <h1 class="text-headline-md text-on-surface">Ballot Sorting</h1>
+    </div>
+  </div>
+  <div class="flex items-center gap-6">
+    <!-- Timer -->
+    <div class="relative flex items-center justify-center w-14 h-14">
+      <svg class="w-full h-full transform -rotate-90" viewBox="0 0 56 56">
+        <circle cx="28" cy="28" r="24" fill="transparent" stroke="#ebe1d1" stroke-width="4"/>
+        <circle id="timerCircle" cx="28" cy="28" r="24" fill="transparent" stroke="#f5c518"
+                stroke-width="4" stroke-dasharray="150.8" stroke-dashoffset="0" stroke-linecap="round"/>
+      </svg>
+      <span id="timerDisplay" class="absolute text-headline-md text-on-surface font-bold">30</span>
+    </div>
+    <!-- Score -->
+    <div class="flex items-center gap-3 bg-surface-container-high px-4 py-2 rounded-xl border border-outline-variant">
+      <span class="material-symbols-outlined text-tertiary" style="font-variation-settings:'FILL' 1">inventory</span>
+      <div>
+        <span class="text-label-sm text-secondary uppercase block">Sorted</span>
+        <span class="text-headline-md text-on-surface font-bold leading-none" id="sortedCount">0<span class="text-secondary text-sm">/20</span></span>
+      </div>
+    </div>
+    <!-- Correct / Wrong -->
+    <div class="hidden sm:flex gap-3">
+      <span id="correctBadge" class="bg-green-100 text-green-700 text-sm font-bold px-3 py-1 rounded-full border border-green-300">✓ <span id="correctCount">0</span></span>
+      <span id="wrongBadge"   class="bg-red-100 text-red-700 text-sm font-bold px-3 py-1 rounded-full border border-red-300">✗ <span id="wrongCount">0</span></span>
+    </div>
+  </div>
+</header>
+
+<!-- Game Canvas -->
+<main class="flex-grow flex flex-col items-center p-6 gap-8">
+  <!-- Play area -->
+  <div class="w-full max-w-5xl flex flex-col md:flex-row justify-between items-stretch gap-6 relative" style="min-height:400px">
+    <!-- INVALID -->
+    <div id="invalidZone" class="drop-zone invalid-zone flex-1 flex flex-col items-center justify-center bg-error-container/20 border-2 border-dashed border-error rounded-xl p-8 group" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,'invalid')">
+      <div class="w-20 h-20 rounded-full bg-error-container flex items-center justify-center mb-4">
+        <span class="material-symbols-outlined text-error text-4xl" style="font-variation-settings:'FILL' 1">cancel</span>
+      </div>
+      <h2 class="text-headline-xl text-on-error-container mb-2">INVALID</h2>
+      <p class="text-body-md text-on-surface-variant text-center max-w-[180px]">Ballots with errors, smudges, or missing signatures</p>
+    </div>
+
+    <!-- Center stack -->
+    <div class="flex-[1.5] relative flex items-center justify-center">
+      <div class="absolute w-72 h-96 bg-surface-container border border-outline-variant rounded-xl rotate-[-4deg] translate-y-2 opacity-40"></div>
+      <div class="absolute w-72 h-96 bg-surface-container border border-outline-variant rounded-xl rotate-[2deg] translate-x-2 opacity-60"></div>
+      <!-- Active card -->
+      <div id="ballotCard" class="ballot-card relative w-72 h-96 bg-surface-container-lowest border border-outline rounded-xl shadow-lg p-6 flex flex-col justify-between z-10 select-none"
+           draggable="true" ondragstart="dragStart(event)">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- VALID -->
+    <div id="validZone" class="drop-zone valid-zone flex-1 flex flex-col items-center justify-center bg-tertiary-container/20 border-2 border-dashed border-tertiary rounded-xl p-8 group" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event,'valid')">
+      <div class="w-20 h-20 rounded-full bg-tertiary-container flex items-center justify-center mb-4">
+        <span class="material-symbols-outlined text-on-tertiary-container text-4xl" style="font-variation-settings:'FILL' 1">how_to_vote</span>
+      </div>
+      <h2 class="text-headline-xl text-on-tertiary-fixed-variant mb-2">VALID</h2>
+      <p class="text-body-md text-on-surface-variant text-center max-w-[180px]">Clean ballots with valid signature and single candidate marked</p>
+    </div>
+  </div>
+
+  <!-- Mobile swipe buttons -->
+  <div class="md:hidden flex gap-4 w-full max-w-sm">
+    <button onclick="handleDrop(null,'invalid')" class="flex-1 py-4 bg-error-container text-on-error-container font-bold rounded-xl border border-error flex items-center justify-center gap-2">
+      <span class="material-symbols-outlined">cancel</span>INVALID
+    </button>
+    <button onclick="handleDrop(null,'valid')" class="flex-1 py-4 bg-tertiary-container text-on-tertiary-container font-bold rounded-xl border border-tertiary flex items-center justify-center gap-2">
+      <span class="material-symbols-outlined">how_to_vote</span>VALID
+    </button>
+  </div>
+
+  <!-- Instructions -->
+  <div class="w-full max-w-3xl bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm flex gap-6 items-start">
+    <div class="w-12 h-12 rounded-full bg-primary-container flex-shrink-0 flex items-center justify-center">
+      <span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings:'FILL' 1">info</span>
+    </div>
+    <div>
+      <h3 class="text-headline-md text-on-surface mb-2">How to Play</h3>
+      <p class="text-body-md text-on-surface-variant">Review the ballot. Drag it to <strong class="text-tertiary">VALID</strong> if clean, or <strong class="text-error">INVALID</strong> if it has errors (missing signature, illegible mark, multiple candidates ticked, torn/damaged). You have <strong>30 seconds</strong>. Sort as many as possible!</p>
+    </div>
+  </div>
+</main>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- Game Over Modal -->
+<div id="gameModal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+  <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant p-8 max-w-md w-full text-center shadow-2xl">
+    <span class="material-symbols-outlined text-6xl text-primary mb-4" style="font-variation-settings:'FILL' 1">sports_score</span>
+    <h2 class="text-headline-xl text-on-surface mb-2">Time's Up!</h2>
+    <p class="text-body-md text-on-surface-variant mb-6">You sorted <strong id="finalSorted">0</strong> ballots — <strong id="finalCorrect">0</strong> correct, <strong id="finalWrong">0</strong> wrong.</p>
+    <div class="flex flex-col gap-3">
+      <button id="goQuizBtn" class="w-full bg-primary text-on-primary py-4 rounded-full font-bold text-label-sm uppercase tracking-widest hover:opacity-90 transition-opacity">
+        Proceed to Quiz →
+      </button>
+      <button onclick="startGame()" class="w-full border border-outline text-on-surface py-3 rounded-full text-label-sm uppercase tracking-widest hover:bg-surface-container transition-colors">
+        Try Again
+      </button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { getState, setState, addXP, addScore } from './src/state.js';
+import { BALLOTS } from './src/state.js';
+
+const params = new URLSearchParams(window.location.search);
+const stageIdx = parseInt(params.get('stage') || '0', 10);
+
+let queue = [], timerInterval, timeLeft = 30, sorted = 0, correct = 0, wrong = 0;
+let dragBallot = null;
+
+window.startGame = function() {
+  document.getElementById('gameModal').classList.add('hidden');
+  queue = [...BALLOTS].sort(() => Math.random() - 0.5);
+  sorted = 0; correct = 0; wrong = 0; timeLeft = 30;
+  updateStats();
+  renderCard();
+  clearInterval(timerInterval);
+  timerInterval = setInterval(tick, 1000);
+};
+
+function tick() {
+  timeLeft--;
+  const pct = timeLeft / 30;
+  const circumference = 150.8;
+  document.getElementById('timerCircle').style.strokeDashoffset = circumference * (1 - pct);
+  document.getElementById('timerDisplay').textContent = timeLeft;
+  if (timeLeft <= 0) endGame();
+}
+
+function endGame() {
+  clearInterval(timerInterval);
+  const xpEarned = correct * 10;
+  const scoreEarned = correct * 50;
+  const s = getState();
+  addXP(xpEarned);
+  addScore(scoreEarned);
+  setState({ gameScore: Math.max(s.gameScore, correct) });
+  document.getElementById('finalSorted').textContent  = sorted;
+  document.getElementById('finalCorrect').textContent = correct;
+  document.getElementById('finalWrong').textContent   = wrong;
+  document.getElementById('gameModal').classList.remove('hidden');
+  document.getElementById('goQuizBtn').onclick = () => {
+    window.location.href = 'quiz.html?stage=' + stageIdx;
+  };
+}
+
+function renderCard() {
+  if (!queue.length) { endGame(); return; }
+  const b = queue[0];
+  dragBallot = b;
+  const card = document.getElementById('ballotCard');
+  card.innerHTML = `
+    <div class="border-b-2 border-primary pb-4 mb-4">
+      <div class="flex justify-between items-start mb-2">
+        <span class="text-label-sm text-secondary uppercase">Official Ballot</span>
+        <span class="text-label-sm text-secondary">${b.id}</span>
+      </div>
+      <h3 class="text-headline-md text-on-surface">${b.district} Election</h3>
+    </div>
+    <div class="flex-grow flex flex-col gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-6 h-6 rounded-full border-2 border-outline flex items-center justify-center bg-primary">
+          <span class="material-symbols-outlined text-on-primary text-sm">check</span>
+        </div>
+        <span class="text-body-lg text-on-surface">${b.candidate}</span>
+      </div>
+      ${b.issue ? `
+      <div class="mt-auto p-3 bg-error-container/20 rounded-lg border border-error/30 text-sm">
+        <span class="text-label-sm text-secondary uppercase block mb-1">Signature Area</span>
+        <span class="text-error italic">${b.issue}</span>
+      </div>` : `
+      <div class="mt-auto p-3 bg-surface-variant rounded-lg border border-outline-variant text-sm">
+        <span class="text-label-sm text-secondary uppercase block mb-1">Voter Signature</span>
+        <div class="h-8 border-b border-dashed border-outline relative">
+          <span class="absolute bottom-1 left-2 italic text-on-surface-variant" style="font-family:cursive">Valid Signature ✓</span>
+        </div>
+      </div>`}
+    </div>
+  `;
+  card.classList.remove('opacity-0');
+}
+
+function updateStats() {
+  document.getElementById('sortedCount').innerHTML = sorted + '<span class="text-secondary text-sm">/20</span>';
+  document.getElementById('correctCount').textContent = correct;
+  document.getElementById('wrongCount').textContent   = wrong;
+}
+
+window.dragStart = function(e) {
+  e.dataTransfer.setData('text/plain', 'ballot');
+};
+
+window.handleDrop = function(e, zone) {
+  if (e) { e.preventDefault(); document.getElementById(zone+'Zone').classList.remove('drag-over'); }
+  if (!queue.length) return;
+  const b = queue.shift();
+  const isCorrect = (zone === 'valid') === b.valid;
+  sorted++;
+  if (isCorrect) { correct++; showToast('✓ Correct!', '#dcfce7', '#166534'); }
+  else           { wrong++;   showToast('✗ ' + (b.valid ? 'That was VALID!' : 'That was INVALID!'), '#fef2f2', '#991b1b'); }
+  updateStats();
+  renderCard();
+};
+
+function showToast(msg, bg, color) {
+  const t = document.getElementById('toast');
+  t.style.background = bg; t.style.color = color; t.style.border = `1px solid ${color}40`;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1200);
+}
+
+window.startGame();
+</script>
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quiz – Election Quest</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+tailwind.config={darkMode:"class",theme:{extend:{colors:{
+  "outline":"#807660","primary-fixed":"#ffe08b","outline-variant":"#d1c5ac","secondary":"#535f74",
+  "primary-fixed-dim":"#f0c110","on-surface-variant":"#4e4633","surface-container-highest":"#ebe1d1",
+  "surface-container-high":"#f1e7d6","background":"#fff8f1","surface-variant":"#ebe1d1",
+  "tertiary":"#00687c","primary":"#745b00","on-primary":"#ffffff","on-background":"#1f1b11",
+  "surface-container":"#f6eddc","on-surface":"#1f1b11","secondary-container":"#d4e0f9",
+  "surface-container-lowest":"#ffffff","on-primary-container":"#695200",
+  "primary-container":"#f5c518","surface-tint":"#745b00","tertiary-container":"#49dbff",
+  "on-tertiary":"#ffffff","on-tertiary-container":"#005e70","tertiary-fixed":"#b0ecff",
+  "error":"#ba1a1a","error-container":"#ffdad6","on-error-container":"#93000a",
+},fontSize:{
+  "display-lg":["48px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"700"}],
+  "headline-xl":["32px",{"lineHeight":"1.2","letterSpacing":"-0.01em","fontWeight":"700"}],
+  "headline-md":["24px",{"lineHeight":"1.3","fontWeight":"600"}],
+  "body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],
+  "body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],
+  "label-sm":["12px",{"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"600"}]
+}}}}
+</script>
+<style>
+body{font-family:'Public Sans',sans-serif;}
+.option-btn{transition:all .2s; cursor:pointer;}
+.option-btn:hover:not(:disabled){transform:translateX(4px);}
+#qTimerCircle{transition:stroke-dashoffset 1s linear;}
+.progress-bar-fill{transition:width .5s ease;}
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex overflow-hidden">
+
+<!-- Sidebar HUD -->
+<nav class="hidden md:flex bg-surface-container-lowest border-r border-outline-variant fixed left-0 top-0 h-full w-60 flex-col py-6 px-4 z-20">
+  <div class="flex items-center gap-3 mb-8 px-2">
+    <div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center border border-secondary-fixed">
+      <span class="material-symbols-outlined text-on-secondary-container text-2xl" style="font-variation-settings:'FILL' 1">person</span>
+    </div>
+    <div>
+      <h2 id="sideName" class="text-label-sm text-on-surface uppercase tracking-widest font-bold">Player</h2>
+      <p id="sideRank" class="text-body-md text-on-surface-variant text-sm">Junior Fellow</p>
+    </div>
+  </div>
+  <ul class="flex flex-col gap-2 flex-1">
+    <li class="flex items-center gap-3 px-3 py-3 rounded-lg text-secondary">
+      <span class="material-symbols-outlined">stars</span>
+      <span id="hudXP" class="text-body-md font-medium">XP: 0</span>
+    </li>
+    <li class="flex items-center gap-3 px-3 py-3 rounded-lg text-secondary">
+      <span class="material-symbols-outlined">workspace_premium</span>
+      <span id="hudLevel" class="text-body-md font-medium">Level 1</span>
+    </li>
+    <li class="flex items-center gap-3 px-3 py-3 rounded-lg bg-surface-container-highest border-l-4 border-primary text-on-surface font-bold">
+      <span class="material-symbols-outlined text-primary" style="font-variation-settings:'FILL' 1">leaderboard</span>
+      <span id="hudScore" class="text-body-md">Score: 0</span>
+    </li>
+    <li class="flex items-center gap-3 px-3 py-3 rounded-lg text-secondary">
+      <span class="material-symbols-outlined text-orange-500" style="font-variation-settings:'FILL' 1">local_fire_department</span>
+      <span id="hudStreak" class="text-body-md font-medium">0 Day Streak</span>
+    </li>
+  </ul>
+  <a href="trophies.html" class="mt-auto w-full py-3 border border-outline rounded-lg text-on-surface text-label-sm uppercase tracking-widest hover:bg-surface-variant transition-colors flex justify-center items-center gap-2">
+    View Achievements
+  </a>
+</nav>
+
+<!-- Main -->
+<main class="flex-1 md:ml-60 flex flex-col h-screen overflow-hidden bg-background">
+  <!-- Top bar -->
+  <header class="w-full flex justify-between items-center px-6 md:px-10 py-4 border-b border-outline-variant bg-surface-container-lowest/80 backdrop-blur-sm z-10">
+    <div class="flex items-center gap-4">
+      <button onclick="history.back()" class="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface-variant transition-colors text-on-surface-variant">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <div>
+        <h3 id="quizTopic" class="text-label-sm text-secondary uppercase tracking-widest">Election Quiz</h3>
+        <p id="questionMeta" class="text-body-md text-on-surface font-medium">Question 1 of 7</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <!-- Multiplier -->
+      <div id="multiplierBadge" class="hidden sm:flex items-center gap-1.5 px-4 py-1.5 bg-primary-container text-on-primary-container rounded-full text-label-sm border border-primary-fixed-dim">
+        <span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1">bolt</span>
+        <span id="multiplierText">1x</span>
+      </div>
+      <!-- Lifelines -->
+      <div class="flex gap-2 border-r border-outline-variant pr-4">
+        <button id="hint50Btn" title="50/50" onclick="use5050()" class="w-10 h-10 rounded-full border border-outline bg-surface-container-lowest flex items-center justify-center text-on-surface hover:bg-secondary-container transition-all">
+          <span class="material-symbols-outlined text-[20px]">splitscreen</span>
+        </button>
+        <button id="hintBtn" title="Hint" onclick="useHint()" class="w-10 h-10 rounded-full border border-outline bg-surface-container-lowest flex items-center justify-center text-on-surface hover:bg-primary-container transition-all">
+          <span class="material-symbols-outlined text-[20px]">lightbulb</span>
+        </button>
+      </div>
+      <!-- Timer -->
+      <div class="relative flex items-center justify-center w-14 h-14">
+        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 56 56">
+          <circle cx="28" cy="28" r="24" fill="transparent" stroke="#ebe1d1" stroke-width="4"/>
+          <circle id="qTimerCircle" cx="28" cy="28" r="24" fill="transparent" stroke="#f5c518"
+                  stroke-width="4" stroke-dasharray="150.8" stroke-dashoffset="0" stroke-linecap="round"/>
+        </svg>
+        <span id="qTimerDisplay" class="absolute text-headline-md text-on-surface font-bold">20</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Progress bar -->
+  <div class="w-full h-1 bg-surface-variant">
+    <div id="progressBar" class="progress-bar-fill h-full bg-primary" style="width:0%"></div>
+  </div>
+
+  <!-- Quiz area -->
+  <div class="flex-1 overflow-y-auto w-full flex flex-col items-center pt-10 pb-32 px-6">
+    <div class="w-full max-w-2xl flex flex-col gap-8">
+      <!-- Question -->
+      <div class="pl-4 border-l-4 border-primary">
+        <h1 id="questionText" class="text-headline-xl text-on-surface"></h1>
+      </div>
+      <!-- Options -->
+      <div id="optionsList" class="flex flex-col gap-3 w-full"></div>
+      <!-- Hint box -->
+      <div id="hintBox" class="hidden bg-primary-container/30 border border-primary-fixed-dim rounded-xl p-4 text-body-md text-on-primary-container"></div>
+      <!-- Explanation -->
+      <div id="explanationBox" class="hidden bg-surface-container-lowest border border-tertiary-fixed rounded-xl p-6 relative overflow-hidden shadow-sm">
+        <div class="absolute top-0 right-0 w-48 h-48 bg-tertiary-fixed opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+        <div class="relative z-10">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined text-tertiary" style="font-variation-settings:'FILL' 1">auto_awesome</span>
+            <h4 class="text-label-sm text-tertiary uppercase tracking-widest font-bold">Explanation</h4>
+          </div>
+          <p id="explanationText" class="text-body-lg text-on-surface mb-4"></p>
+          <div class="flex justify-end">
+            <button id="nextBtn" class="bg-primary text-on-primary text-label-sm uppercase tracking-widest px-8 py-3 rounded hover:opacity-90 transition-opacity flex items-center gap-2">
+              Next Question <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import { getState, addXP, addScore, unlockNextStage, markStageDone, evaluateBadges } from './src/state.js';
+import { QUIZ_QUESTIONS } from './src/state.js';
+
+const params = new URLSearchParams(window.location.search);
+const stageIdx = parseInt(params.get('stage') || '0', 10);
+
+let qIdx = 0, streak = 0, hintsLeft = 2, removed50 = false;
+let timerInterval, timeLeft = 20;
+
+function updateHUD() {
+  const s = getState();
+  document.getElementById('sideName').textContent   = s.playerName;
+  document.getElementById('hudXP').textContent      = 'XP: ' + s.xp;
+  document.getElementById('hudLevel').textContent   = 'Level ' + s.level;
+  document.getElementById('hudScore').textContent   = 'Score: ' + s.score;
+  document.getElementById('hudStreak').textContent  = s.streakDays + ' Day Streak';
+}
+
+function renderQuestion() {
+  if (qIdx >= QUIZ_QUESTIONS.length) { finishQuiz(); return; }
+  const q = QUIZ_QUESTIONS[qIdx];
+  hintsLeft = Math.max(hintsLeft, 0);
+  removed50 = false;
+
+  document.getElementById('questionText').textContent  = q.q;
+  document.getElementById('questionMeta').textContent  = `Question ${qIdx+1} of ${QUIZ_QUESTIONS.length}`;
+  document.getElementById('progressBar').style.width   = (qIdx / QUIZ_QUESTIONS.length * 100) + '%';
+  document.getElementById('explanationBox').classList.add('hidden');
+  document.getElementById('hintBox').classList.add('hidden');
+
+  const multiplier = streak >= 3 ? 2 : streak >= 1 ? 1.5 : 1;
+  document.getElementById('multiplierText').textContent = multiplier + 'x MULTIPLIER';
+  if (multiplier > 1) document.getElementById('multiplierBadge').classList.remove('hidden');
+
+  const opts = document.getElementById('optionsList');
+  const labels = ['A','B','C','D'];
+  opts.innerHTML = q.opts.map((o, i) => `
+    <button class="option-btn group w-full p-5 bg-surface-container-lowest border border-outline-variant rounded-xl flex items-center gap-5 text-left hover:border-outline hover:shadow-sm transition-all"
+            data-idx="${i}" onclick="selectOption(${i})" id="opt_${i}">
+      <div class="w-8 h-8 rounded border border-outline text-secondary flex items-center justify-center text-label-sm bg-surface-variant group-hover:bg-white transition-colors flex-shrink-0">${labels[i]}</div>
+      <div class="text-body-lg text-on-surface-variant group-hover:text-on-surface transition-colors">${o}</div>
+    </button>`).join('');
+
+  // Timer
+  clearInterval(timerInterval);
+  timeLeft = 20;
+  document.getElementById('qTimerDisplay').textContent = timeLeft;
+  document.getElementById('qTimerCircle').style.strokeDashoffset = 0;
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    const pct = timeLeft / 20;
+    document.getElementById('qTimerCircle').style.strokeDashoffset = 150.8 * (1 - pct);
+    document.getElementById('qTimerDisplay').textContent = timeLeft;
+    if (timeLeft <= 0) { clearInterval(timerInterval); timeExpired(); }
+  }, 1000);
+}
+
+window.selectOption = function(chosen) {
+  clearInterval(timerInterval);
+  const q = QUIZ_QUESTIONS[qIdx];
+  const isCorrect = chosen === q.correct;
+  const labels = ['A','B','C','D'];
+  const multiplier = streak >= 3 ? 2 : streak >= 1 ? 1.5 : 1;
+
+  // Disable all options
+  document.querySelectorAll('.option-btn').forEach(btn => { btn.disabled = true; btn.classList.remove('hover:border-outline'); });
+
+  // Colour correct
+  const correctBtn = document.getElementById('opt_'+q.correct);
+  correctBtn.className = 'option-btn w-full p-5 bg-tertiary-container border-2 border-tertiary rounded-xl flex items-center gap-5 text-left scale-[1.01]';
+  correctBtn.querySelector('div:first-child').className = 'w-8 h-8 rounded bg-tertiary text-on-tertiary flex items-center justify-center text-label-sm flex-shrink-0';
+  correctBtn.querySelector('div:last-child').className  = 'text-body-lg text-on-tertiary-container font-medium';
+
+  if (!isCorrect) {
+    const wrongBtn = document.getElementById('opt_'+chosen);
+    wrongBtn.className = 'option-btn w-full p-5 bg-error-container border-2 border-error rounded-xl flex items-center gap-5 text-left opacity-80';
+    wrongBtn.querySelector('div:first-child').className = 'w-8 h-8 rounded bg-error text-on-error flex items-center justify-center text-label-sm flex-shrink-0';
+    wrongBtn.querySelector('div:last-child').className  = 'text-body-lg text-on-error-container line-through opacity-80';
+    streak = 0;
+  } else {
+    const xpEarned    = Math.round(50 * multiplier);
+    const scoreEarned = Math.round(100 * multiplier);
+    addXP(xpEarned);
+    addScore(scoreEarned);
+    streak++;
+    evaluateBadges();
+    updateHUD();
+  }
+
+  document.getElementById('explanationText').textContent = q.explanation;
+  document.getElementById('explanationBox').classList.remove('hidden');
+  document.getElementById('nextBtn').onclick = () => { qIdx++; renderQuestion(); };
+};
+
+function timeExpired() {
+  selectOption(-1); // -1 = no selection, mark wrong
+}
+
+window.use5050 = function() {
+  if (removed50) return;
+  const q = QUIZ_QUESTIONS[qIdx];
+  const wrongOpts = [0,1,2,3].filter(i => i !== q.correct);
+  const toRemove = wrongOpts.sort(() => Math.random() - 0.5).slice(0,2);
+  toRemove.forEach(i => {
+    const btn = document.getElementById('opt_'+i);
+    if (btn) { btn.disabled = true; btn.classList.add('opacity-30', 'cursor-not-allowed'); }
+  });
+  removed50 = true;
+  document.getElementById('hint50Btn').disabled = true;
+  document.getElementById('hint50Btn').classList.add('opacity-40');
+};
+
+window.useHint = function() {
+  if (hintsLeft <= 0) return;
+  hintsLeft--;
+  const q = QUIZ_QUESTIONS[qIdx];
+  const hintBox = document.getElementById('hintBox');
+  hintBox.textContent = '💡 Hint: ' + q.explanation.split('.')[0] + '.';
+  hintBox.classList.remove('hidden');
+  if (hintsLeft === 0) {
+    document.getElementById('hintBtn').disabled = true;
+    document.getElementById('hintBtn').classList.add('opacity-40');
+  }
+};
+
+function finishQuiz() {
+  clearInterval(timerInterval);
+  unlockNextStage();
+  markStageDone(stageIdx);
+  evaluateBadges();
+  window.location.href = 'graduate.html?stage=' + stageIdx;
+}
+
+// Init
+updateHUD();
+renderQuestion();
+</script>
+</body>
+</html>
